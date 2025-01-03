@@ -28,3 +28,15 @@ async def get_all_quarters(db: Session = Depends(get_db)):
     quarters_dict = [quarter.__dict__ for quarter in quarters]
 
     return quarters_dict
+
+
+@financial_router.get("/get_quarter_id/{quarter_id}", response_model=schemas.FinancialQuartersResponse)
+async def get_quarter_by_id(quarter_id: int, db: Session = Depends(get_db)): 
+    
+    quarter = db.query(models.FinancialQuarters).filter(models.FinancialQuarters.id == quarter_id).first()
+    
+    if quarter is None: 
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Financial quarter with id {quarter_id} not fund.")
+    
+    return quarter
+    
