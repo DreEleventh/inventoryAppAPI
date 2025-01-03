@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from app.databaseConnection import engine, Base
 import app.models
-from app.routers import categories
+from app.routers import categories, financial_quarter
 # Create an async lifespan function
 # @asynccontextmanager
 # async def lifespan(app: FastAPI):
@@ -24,6 +24,7 @@ app.add_middleware(
 )
 
 app.include_router(categories.category_router)
+app.include_router(financial_quarter.financial_router)
 
 @app.get("/")
 def read_root():

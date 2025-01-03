@@ -10,10 +10,10 @@ from app.databaseConnection import get_db
 
 category_router = APIRouter(
     prefix="/category",
-    tags=['Category']
+    tags=['Product Category']
 )
 
-@category_router.post("/add_category", status_code=status.HTTP_201_CREATED, response_model=schemas.AddProductCategory)
+@category_router.post("/add_category", status_code=status.HTTP_201_CREATED, response_model=schemas.ProductCategoryResponse)
 async def add_category(category_data: schemas.AddProductCategory, db: Session = Depends(get_db)):
     # Check if the category code already exists
     existing_category = db.query(models.ProductCategory).filter(

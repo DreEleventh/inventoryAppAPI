@@ -1,0 +1,20 @@
+meta {
+  name: Add Financial Quarter
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://127.0.0.1:8000/financial/add_quarter
+  body: json
+  auth: none
+}
+
+body:json {
+   {
+     "year": 2025,
+      "start_date": "2025-01-01T00:00:00",
+      "end_date": "2025-03-31T23:59:59",
+      "description": "Q1 of Financial Year 2025"
+  }
+}
