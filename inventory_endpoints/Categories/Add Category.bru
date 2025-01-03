@@ -1,0 +1,19 @@
+meta {
+  name: Add Category
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://127.0.0.1:8000/category/add_category
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "code": "HM011",
+    "category": "Home Appliances",
+    "description": "Electronic devices for household use, such as vacuum cleaners, refrigerators, and microwave ovens."
+    }
+}
