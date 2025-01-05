@@ -7,6 +7,7 @@ from sqlalchemy.sql.sqltypes import TIMESTAMP, Text, Enum, DECIMAL, DATE
 from app.databaseConnection import Base
 
 
+#==================================== Employees =======================================
 class UserGroups(Base):
     __tablename__ = "user_groups"
     id = Column(Integer, primary_key=True, nullable=False)
@@ -37,7 +38,9 @@ class EmployeeCredentials(Base):
     last_login_time = Column(TIMESTAMP(timezone=True))
 
     employees = relationship("Employees")
+    
 
+#==================================== Products =======================================
 class ProductCategory(Base):
     __tablename__ = "product_category"
     id = Column(Integer, primary_key=True, nullable=False)
