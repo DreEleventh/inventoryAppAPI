@@ -1,3 +1,10 @@
+# Name of Enterprise App: Inventory System API
+# Developers: Andre McKenzie
+# Version: 1.0
+# Version Date: 2025-01-05
+# Purpose: FastAPI backend implementation for a inventory Management system, designed to store use and 
+# products data as will as having the ability to generate reports on said data
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager

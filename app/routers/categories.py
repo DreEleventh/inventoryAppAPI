@@ -1,4 +1,6 @@
-# Router for managing product categories
+"""
+Router for managing product categories
+"""
 
 from fastapi import HTTPException, Depends, status, APIRouter
 from sqlalchemy.orm import Session
