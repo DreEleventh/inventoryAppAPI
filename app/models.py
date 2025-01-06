@@ -3,6 +3,7 @@ from sqlalchemy import Boolean, CheckConstraint, Column, Integer, String, Float,
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import text
 from sqlalchemy.sql.sqltypes import TIMESTAMP, Text, Enum, DECIMAL, DATE
+from enum import Enum as PyEnum
 
 from app.databaseConnection import Base
 
@@ -63,12 +64,20 @@ class FinancialQuarters(Base):
 
     products = relationship("Products", back_populates="financial")
 
+class BarcodeType(PyEnum):
+    UPC = "UPC"
+    EAN_13 = "EAN-13"
+    EAN_8 = "EAN-8"
+    CODE_128 = "Code128"
+    QR_CODE = "QRCode"
+
 class Products(Base):
     __tablename__ = "products"
     id = Column(Integer, primary_key=True, nullable=False)
     product_name = Column(String(150), nullable=False)
     product_code = Column(String(5), unique=True, nullable=False)
-    barcode = Column(String(12), unique=True, nullable=False)
+    barcode = Column(String(50), unique=True, nullable=False)
+    barcode_type = Column(Enum(BarcodeType), nullable=False)
     description = Column(Text, nullable=False)
     category_id = Column(Integer, ForeignKey("product_category.id"), nullable=False)
     selling_price = Column(DECIMAL(19, 4), nullable=False)
@@ -83,6 +92,15 @@ class Products(Base):
     financial = relationship("FinancialQuarters", back_populates="products")
 
     __table_args__=(
+        CheckConstraint(
+        "barcode_type IN ('UPC', 'EAN-13', 'EAN-8', 'Code128', 'QRCode')", 
+        name='check_valid_barcode_type'),
+        CheckConstraint(
+        "(barcode_type = 'UPC' AND length(barcode) = 12) OR "
+        "(barcode_type = 'EAN-13' AND length(barcode) = 13) OR "
+        "(barcode_type = 'EAN-8' AND length(barcode) = 8) OR "
+        "(barcode_type IN ('Code128', 'QRCode'))", 
+        name="check_barcode_length"),
         CheckConstraint('reorder_level <= stock_count', name='check_reorder_level'),
         CheckConstraint('stock_count >= 0', name='check_stock_count_non_negative'),
         CheckConstraint('reorder_level >= 0', name='check_reorder_level_non_negative'),

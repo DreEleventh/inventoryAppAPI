@@ -85,6 +85,7 @@ class ProductsBase(BaseModel):
     category_id: int
     selling_price: float
     stock_count: int
+    reorder_level: int
     financial_quarter_id: int
 
 class AddProducts(ProductsBase):
@@ -103,7 +104,7 @@ class ProductsResponse(ProductsBase):
     """
     id: int
     date_added: datetime
-    date_modified: Optional[datetime]
+    date_modified: Optional[datetime] = None
 
     class Config:
         form_attribute = True
