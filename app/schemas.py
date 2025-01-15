@@ -1,7 +1,9 @@
-from pydantic import BaseModel, EmailStr
+from ast import pattern
+from pydantic import BaseModel, EmailStr, ValidationError, field_validator
 from datetime import datetime
-from typing import Optional, List
+from typing import Any, Optional, List
 from enum import Enum
+import re
 
 
 #----------------------- Financial Quarter Schemas -----------------------
@@ -71,6 +73,14 @@ class ProductCategoryResponse(ProductCategoryBase):
     class Config: 
        from_attributes = True
 
+class BarcodeType(str, Enum): 
+    upc = "UPC"
+    ean_13 = "EAN-13"
+    ean_8 = "EAN-8"
+    code_128 = "Code128"
+    qr_code = "QRCode"
+    itf_14 = "ITF-14"
+    code_39 = "Code29"
 
 class ProductsBase(BaseModel):
     """Base schema for validating product-related data
@@ -81,12 +91,74 @@ class ProductsBase(BaseModel):
     product_code: str
     product_name: str
     barcode: str
+    barcode_type: BarcodeType
     description: str
     category_id: int
     selling_price: float
     stock_count: int
     reorder_level: int
     financial_quarter_id: int
+    
+    # Validation patterns for each barcode type
+    VALIDATION_PATTERNS = {
+        BarcodeType.upc: r'^\d{12}$',
+        BarcodeType.ean_13: r'^\d{13}', 
+        BarcodeType.ean_8: r'^\d{8}', 
+        BarcodeType.code_128: r'^[\x00-\x7F]+$',
+        BarcodeType.qr_code: r'^[\x00-\xFF]+$', 
+        BarcodeType.itf_14: r'^\d{14}$',
+        BarcodeType.code_39: r'^[A-Z0-9\-\.\$\/\+\%\s]+$'
+    }
+    
+    ERROR_MESSAGES ={
+        BarcodeType.upc: "UPC must be exactly 12 digits", 
+        BarcodeType.ean_13: "EAN-13 must be exactly 13 digits", 
+        BarcodeType.ean_8: "EAN-8 must be exactly 8 digits", 
+        BarcodeType.code_128: "Code128 must contain only ASCII characters", 
+        BarcodeType.qr_code: "QR Code can contain any character",
+        BarcodeType.itf_14: "ITF-14 must be exactly 14 digits", 
+        BarcodeType.code_39: "Code39 must contain only uppercase letters, numbers, and special characters (- . $ / + %)"
+    }
+    
+    # Field validator for 'barcode'    
+    @field_validator('barcode', mode="before")
+    def validate_barcode(cls, value: str) -> str:
+        """Strip whitespace and validate non-emptiness of barcode."""
+        if not isinstance(value, str) or not value.strip(): 
+            raise ValueError("barcode cannot be empty or non-string")
+        return value.strip()
+    
+    @field_validator("barcode", mode="after")
+    def validate_barcode_with_type(cls, value: str, values: dict[str, Any]) -> str:
+        """Validate the barcode based on its type."""
+        barcode_type = values.get("barcode_type")
+        if not barcode_type:
+            raise ValueError("Barcode type is required for validation.")
+        
+        pattern = cls.VALIDATION_PATTERNS.get(barcode_type)
+        if not pattern or not re.fullmatch(pattern, value):
+            raise ValueError(cls.ERROR_MESSAGES.get(barcode_type, "Invalid barcode format"))
+        
+        # Check digit validation for applicable types
+        if barcode_type in {BarcodeType.upc, BarcodeType.ean_13, BarcodeType.ean_8}:
+            if not cls._validate_check_digit(value, barcode_type): 
+                raise ValueError(f"Invalid check digit for {barcode_type.value}")
+            
+        return value
+    
+    @staticmethod
+    def _validate_check_digit(barcode: str, barcode_type: BarcodeType) -> bool:
+        """Validates the check for UPC, EAN-13, AND EAN-8 barcodes."""
+        def calculate_check_digit(digits: str) -> int:
+            total = 0 
+            for i, digit in enumerate(digits[:-1]):
+                multiplier = 3 if i % 2 == (0 if barcode_type == BarcodeType.ean_13 else 1) else 1
+                total += int(digit) * multiplier
+            return (10 - (total % 10)) % 10 
+        
+        expected_check = calculate_check_digit(barcode)
+        return int(barcode[-1]) == expected_check
+    
 
 class AddProducts(ProductsBase):
     """Schema used for adding new product records to the database.

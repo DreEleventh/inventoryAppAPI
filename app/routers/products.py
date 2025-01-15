@@ -14,4 +14,8 @@ products_router = APIRouter(
 
 @products_router.post("/add_products", status_code=status.HTTP_201_CREATED, response_model=schemas.ProductsResponse)
 async def add_product(product_data: schemas.AddProducts, db: Session = Depends(get_db)): 
-    pass
+    new_products = models.Products(**product_data.model_dump())
+    
+    db.add(new_products)
+    db.commit()
+    db.refresh(new_products)
